@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 func getUserData(logData *LogData) {
@@ -126,5 +127,40 @@ func getDescription(logData *LogData, scanner *bufio.Scanner) {
 		}
 		logData.description = line
 		break
+	}
+}
+
+func userConfirmation(logData *LogData, projectsMap map[int]string) {
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		displayUserInput(logData, projectsMap)
+		fmt.Println("(W)rite | (E)dit | (C)ancel")
+		fmt.Print("Selection: ")
+		if !scanner.Scan() {
+			return
+		}
+		line := strings.TrimSpace(scanner.Text())
+		lowerLine := strings.ToLower(line)
+		char, _ := utf8.DecodeRuneInString(lowerLine)
+
+		switch char {
+		case 'w':
+			fmt.Println("Writing data to log...")
+			return
+		case 'e':
+			displayUserInput(logData, projectsMap)
+			fmt.Print("\nEDIT MODE:\n")
+			fmt.Println(strings.Repeat("-", 80))
+			fmt.Println(
+				"(P)roject ID | (S)tart time | (E)nd time | (C)ategory | (D)escription | (Q)uit ",
+			)
+			return
+		case 'c':
+			fmt.Println("Cancelling the log entry...")
+			return
+		default:
+			fmt.Printf("%s is invalid. Please enter again.", line)
+			time.Sleep(1750 * time.Millisecond)
+		}
 	}
 }

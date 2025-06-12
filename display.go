@@ -1,9 +1,7 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -11,14 +9,11 @@ func clearScreen() {
 	fmt.Print("\033[H\033[2J")
 }
 
-func displayUserInput(db *sql.DB, logData *LogData) {
-	projectDesc, err := getProjectDesc(db, logData.projectId)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			fmt.Println("No description matches Project Code:", logData.projectId)
-			return
-		}
-		log.Fatal(err)
+func displayUserInput(logData *LogData, projectsMap map[int]string) {
+	projectDesc, ok := projectsMap[logData.projectId]
+	if !ok {
+		fmt.Println("No description matches Project Code:", logData.projectId)
+		return
 	}
 
 	clearScreen()
@@ -45,6 +40,4 @@ func displayUserInput(db *sql.DB, logData *LogData) {
 	fmt.Printf("%-20s %s\n", "Description:", logData.description)
 
 	fmt.Println(strings.Repeat("-", 80))
-	fmt.Print("(W)rite log entry\n\n")
-	fmt.Println("Edit: (P)roject ID | (S)tart time | (E)nd time | (C)ategory | (D)escription")
 }

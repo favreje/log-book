@@ -14,9 +14,13 @@ func main() {
 	}
 	defer db.Close()
 
-	logData := LogData{}
+	logData := &LogData{}
+	projectsMap, err := loadProjectsMap(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Testing getUserData func
-	getUserData(&logData)
-	displayUserInput(db, &logData)
+	getUserData(logData)
+	userConfirmation(logData, projectsMap)
 }

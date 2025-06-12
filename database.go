@@ -4,13 +4,22 @@ import (
 	"database/sql"
 )
 
-func getProjectDesc(db *sql.DB, projectId int) (string, error) {
-	var projectDesc string
-	err := db.QueryRow("SELECT title FROM projects WHERE id = ?", projectId).Scan(&projectDesc)
+func loadProjectsMap(db *sql.DB) (map[int]string, error) {
+	projectsMap := make(map[int]string)
+	rows, err := db.Query("SELECT id, title FROM projects")
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", err
-		}
+		return nil, err
 	}
-	return projectDesc, nil
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var title string
+		err := rows.Scan(&id, &title)
+		if err != nil {
+			return nil, err
+		}
+		projectsMap[id] = title
+	}
+	return projectsMap, nil
 }
