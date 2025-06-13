@@ -21,6 +21,7 @@ func getUserData(logData *LogData) {
 	duration, err := logData.calculateDuration()
 	if err != nil {
 		fmt.Printf("Duration could not be calculated: %v\n", err)
+		return
 	}
 	logData.duration = duration
 
@@ -148,15 +149,80 @@ func userConfirmation(logData *LogData, projectsMap map[int]string) {
 			fmt.Println("Writing data to log...")
 			return
 		case 'e':
-			displayUserInput(logData, projectsMap)
-			fmt.Print("\nEDIT MODE:\n")
-			fmt.Println(strings.Repeat("-", 80))
-			fmt.Println(
-				"(P)roject ID | (S)tart time | (E)nd time | (C)ategory | (D)escription | (Q)uit ",
-			)
-			return
+			userEdit(scanner, logData, projectsMap)
 		case 'c':
 			fmt.Println("Cancelling the log entry...")
+			return
+		default:
+			fmt.Printf("%s is invalid. Please enter again.", line)
+			time.Sleep(1750 * time.Millisecond)
+		}
+	}
+}
+
+func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]string) {
+	for {
+		displayUserInput(logData, projectsMap)
+		fmt.Println("EDIT MODE:")
+		fmt.Println(strings.Repeat("-", 80))
+		fmt.Println(
+			"(P)roject ID | (L)og date | (S)tart time | (E)nd time | (C)ategory | (D)escription | (Q)uit ",
+		)
+		fmt.Print("Selection: ")
+		if !scanner.Scan() {
+			return
+		}
+		line := strings.TrimSpace(scanner.Text())
+		lowerline := strings.ToLower(line)
+		char, _ := utf8.DecodeRuneInString(lowerline)
+
+		switch char {
+		case 'p':
+			getProjId(logData, scanner)
+		case 'l':
+			revisedDate := getLogDate(scanner)
+			// Revise start time
+			timeString := logData.startTime.Format("15:04")
+			dateString := revisedDate.Format("01/02/06") + " " + timeString
+			revisedTime, err := time.Parse("01/02/06 15:04", dateString)
+			if err != nil {
+				fmt.Printf("Invalid Start Time: %v\n", err)
+				continue
+			}
+			logData.startTime = revisedTime
+
+			// Revise end time
+			timeString = logData.endTime.Format("15:04")
+			dateString = revisedDate.Format("01/02/06") + " " + timeString
+			revisedTime, err = time.Parse("01/02/06 15:04", dateString)
+			if err != nil {
+				fmt.Printf("Invalid End Time: %v\n", err)
+				continue
+			}
+			logData.endTime = revisedTime
+		case 's':
+			getLogTime("Start", logData.startTime, logData, scanner)
+			recalculatedDuration, err := logData.calculateDuration()
+			if err != nil {
+				fmt.Printf("Duration could not be calculated: %v\n", err)
+				time.Sleep(1750 * time.Millisecond)
+				return
+			}
+			logData.duration = recalculatedDuration
+		case 'e':
+			getLogTime("End", logData.endTime, logData, scanner)
+			recalculatedDuration, err := logData.calculateDuration()
+			if err != nil {
+				fmt.Printf("Duration could not be calculated: %v\n", err)
+				time.Sleep(1750 * time.Millisecond)
+				return
+			}
+			logData.duration = recalculatedDuration
+		case 'c':
+			getCategory(logData, scanner)
+		case 'd':
+			getDescription(logData, scanner)
+		case 'q':
 			return
 		default:
 			fmt.Printf("%s is invalid. Please enter again.", line)
