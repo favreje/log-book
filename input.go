@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -85,7 +87,8 @@ func getLogTime(
 		line := strings.TrimSpace(scanner.Text())
 		dateString := inputDate.Format("01/02/06") + " " + line
 		layout := "01/02/06 15:04"
-		inputTime, err := time.Parse(layout, dateString)
+		// inputTime, err := time.Parse(layout, dateString)
+		inputTime, err := time.ParseInLocation(layout, dateString, time.Local)
 		if err != nil {
 			fmt.Printf("Invalid %s Time: %v\n", boundaryType, err)
 			continue
@@ -131,7 +134,7 @@ func getDescription(logData *LogData, scanner *bufio.Scanner) {
 	}
 }
 
-func userConfirmation(logData *LogData, projectsMap map[int]string) {
+func userConfirmation(db *sql.DB, logData *LogData, projectsMap map[int]string) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		displayUserInput(logData, projectsMap)
@@ -147,6 +150,11 @@ func userConfirmation(logData *LogData, projectsMap map[int]string) {
 		switch char {
 		case 'w':
 			fmt.Println("Writing data to log...")
+			insertId, err := writeLogEntry(db, logData)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("Successfully saved log entry with ID: %d\n", insertId)
 			return
 		case 'e':
 			userEdit(scanner, logData, projectsMap)
@@ -179,12 +187,14 @@ func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]stri
 		switch char {
 		case 'p':
 			getProjId(logData, scanner)
+			return
 		case 'l':
 			revisedDate := getLogDate(scanner)
+			layout := "01/02/06 15:04"
 			// Revise start time
 			timeString := logData.startTime.Format("15:04")
 			dateString := revisedDate.Format("01/02/06") + " " + timeString
-			revisedTime, err := time.Parse("01/02/06 15:04", dateString)
+			revisedTime, err := time.ParseInLocation(layout, dateString, time.Local)
 			if err != nil {
 				fmt.Printf("Invalid Start Time: %v\n", err)
 				continue
@@ -194,12 +204,14 @@ func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]stri
 			// Revise end time
 			timeString = logData.endTime.Format("15:04")
 			dateString = revisedDate.Format("01/02/06") + " " + timeString
-			revisedTime, err = time.Parse("01/02/06 15:04", dateString)
+
+			revisedTime, err = time.ParseInLocation(layout, dateString, time.Local)
 			if err != nil {
 				fmt.Printf("Invalid End Time: %v\n", err)
 				continue
 			}
 			logData.endTime = revisedTime
+			return
 		case 's':
 			getLogTime("Start", logData.startTime, logData, scanner)
 			recalculatedDuration, err := logData.calculateDuration()
@@ -209,6 +221,7 @@ func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]stri
 				return
 			}
 			logData.duration = recalculatedDuration
+			return
 		case 'e':
 			getLogTime("End", logData.endTime, logData, scanner)
 			recalculatedDuration, err := logData.calculateDuration()
@@ -218,10 +231,13 @@ func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]stri
 				return
 			}
 			logData.duration = recalculatedDuration
+			return
 		case 'c':
 			getCategory(logData, scanner)
+			return
 		case 'd':
 			getDescription(logData, scanner)
+			return
 		case 'q':
 			return
 		default:

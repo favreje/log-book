@@ -22,5 +22,5 @@ func main() {
 
 	// Testing getUserData func
 	getUserData(logData)
-	userConfirmation(logData, projectsMap)
+	userConfirmation(db, logData, projectsMap)
 }
