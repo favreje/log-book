@@ -246,3 +246,39 @@ func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]stri
 		}
 	}
 }
+
+func selectProject(projectsMap map[int]string) (int, error) {
+	scanner := bufio.NewScanner(os.Stdin)
+	clearScreen()
+	for {
+		fmt.Println("Enter report ID (or 'D' to display list)")
+		fmt.Print("Selection: ")
+		if !scanner.Scan() {
+			return 0, scanner.Err()
+		}
+		line := strings.TrimSpace(scanner.Text())
+		lowerline := strings.ToLower(line)
+		char, _ := utf8.DecodeRuneInString(lowerline)
+
+		if char == 'd' {
+			clearScreen()
+			displayProjectList(projectsMap)
+			continue
+		}
+		id, err := strconv.Atoi(line)
+		if err != nil {
+			fmt.Printf("Invalid project ID: %v\n", err)
+			continue
+		}
+		projectDesc, ok := projectsMap[id]
+		if !ok {
+			fmt.Printf("Invalid project ID: %v\n", err)
+			continue
+		}
+		clearScreen()
+		fmt.Printf("ID: %02d\nProject: %s\n", id, projectDesc)
+		if confirmedSelection("Display report?") {
+			return id, nil
+		}
+	}
+}

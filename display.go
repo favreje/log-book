@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -128,6 +129,28 @@ func reportByProject(logRecords []LogData, projectsMap map[int]string) {
 		)
 	}
 	fmt.Println(strings.Repeat("-", columnLen))
-	hrsColumnPadding := 30 + projectDescLen
-	fmt.Printf("%*s%4.2f\n\n", -hrsColumnPadding, "Total Hours:", durationTotal)
+	hrsColumnPadding := 26 + projectDescLen
+	fmt.Printf("%*s%9.2f\n\n", -hrsColumnPadding, "Total Hours:", durationTotal)
+}
+
+func displayProjectList(projectsMap map[int]string) {
+	clearScreen()
+	columnLen := 65
+	header := "Available Projects"
+	padding := (columnLen - len(header)) / 2
+	fmt.Printf("%*s%s\n", padding, "", header)
+	fmt.Println(strings.Repeat("-", columnLen))
+	fmt.Println("ID  Project")
+	fmt.Println(strings.Repeat("-", columnLen))
+
+	keys := []int{}
+	for key := range projectsMap {
+		keys = append(keys, key)
+	}
+	sort.Ints(keys)
+	for key := range keys {
+		fmt.Printf("%02d %s\n", key+1, projectsMap[key+1])
+	}
+
+	fmt.Println(strings.Repeat("-", columnLen))
 }

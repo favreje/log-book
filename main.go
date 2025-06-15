@@ -41,7 +41,10 @@ func main() {
 			getUserData(logData)
 			userConfirmation(db, logData, projectsMap)
 		case '2', 'd':
-			projectId := 12
+			projectId, err := selectProject(projectsMap)
+			if err != nil {
+				log.Fatal(err)
+			}
 			logRecords, err := readLogData(db, &projectId)
 			if err != nil {
 				log.Fatal(err)
