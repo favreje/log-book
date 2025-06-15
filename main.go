@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
+	"strings"
+	"unicode/utf8"
 
 	_ "modernc.org/sqlite"
 )
@@ -20,7 +25,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Testing getUserData func
-	getUserData(logData)
-	userConfirmation(db, logData, projectsMap)
+	// Main menu
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		displayMainMenu()
+		if !scanner.Scan() {
+			return
+		}
+		line := strings.TrimSpace(scanner.Text())
+		lowerline := strings.ToLower(line)
+		char, _ := utf8.DecodeRuneInString(lowerline)
+
+		switch char {
+		case '1', 'i':
+			getUserData(logData)
+			userConfirmation(db, logData, projectsMap)
+		case '2', 'd':
+			projectId := 12
+			logRecords, err := readLogData(db, &projectId)
+			if err != nil {
+				log.Fatal(err)
+			}
+			reportByProject(logRecords, projectsMap)
+			return
+		case '3', 'e':
+			fmt.Println("Exiting the application...")
+			return
+		}
+	}
 }

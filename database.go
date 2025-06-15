@@ -50,3 +50,68 @@ func writeLogEntry(db *sql.DB, logData *LogData) (int64, error) {
 	}
 	return insertId, nil
 }
+
+func readLogData(db *sql.DB, projectId *int) ([]LogData, error) {
+	var rows *sql.Rows
+	var err error
+	if projectId != nil {
+		query := `
+      SELECT rowid, project_id, start_time, end_time, category, description
+      FROM log
+      WHERE project_id = ?
+      ORDER BY project_id, start_time
+    `
+		rows, err = db.Query(query, *projectId)
+	} else {
+		query := `
+      SELECT rowid, project_id, start_time, end_time, category, description
+      FROM log
+      ORDER BY project_id, start_time
+    `
+		rows, err = db.Query(query)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	logRecords := []LogData{}
+	for rows.Next() {
+		var rowId int
+		var logData LogData
+		var startTimeStr string
+		var endTimeStr string
+
+		err := rows.Scan(
+			&rowId,
+			&logData.projectId,
+			&startTimeStr,
+			&endTimeStr,
+			&logData.category,
+			&logData.description,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		startTime, err := parseTimeFromDb(startTimeStr)
+		if err != nil {
+			return nil, err
+		}
+		logData.startTime = startTime
+
+		endTime, err := parseTimeFromDb(endTimeStr)
+		if err != nil {
+			return nil, err
+		}
+		logData.endTime = endTime
+		duration, err := logData.calculateDuration()
+		if err != nil {
+			return nil, err
+		}
+		logData.duration = duration
+
+		logRecords = append(logRecords, logData)
+	}
+	return logRecords, nil
+}
