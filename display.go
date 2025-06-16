@@ -68,13 +68,17 @@ func reportByProject(logRecords []LogData, projectsMap map[int]string) {
 	}
 	projectDescLen := len(projectDesc)
 
-	// Calculate max length of category field
+	// Calculate max length of category and description fields
+	// Description field should be at least 8 characters to accomodate the header
 	categoryLen := 0
 	descLen := 0
 	for _, record := range logRecords {
 		thisCatLen := len(record.category)
 		if thisCatLen > categoryLen {
 			categoryLen = thisCatLen
+		}
+		if categoryLen < 8 {
+			categoryLen = 8
 		}
 		thisDescLen := len(record.description)
 		if thisDescLen > descLen {
