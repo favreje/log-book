@@ -38,7 +38,7 @@ func main() {
 
 		switch char {
 		case '1', 'i':
-			getUserData(logData)
+			getUserData(logData, projectsMap)
 			userConfirmation(db, logData, projectsMap)
 		case '2', 'd':
 			projectId, err := selectProject(projectsMap)

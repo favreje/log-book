@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -31,4 +32,22 @@ func confirmedSelection(msg string) bool {
 	lowerline := strings.ToLower(line)
 	char, _ := utf8.DecodeRuneInString(lowerline)
 	return char == 'y'
+}
+
+func getUserInput(prompt string) (string, bool) {
+	fmt.Printf("%s ('Q' to Quit): ", prompt)
+	scanner := bufio.NewScanner(os.Stdin)
+	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			log.Fatal()
+		}
+		return "", false
+	}
+	line := strings.TrimSpace(scanner.Text())
+	lowerline := strings.ToLower(line)
+	char, _ := utf8.DecodeRuneInString(lowerline)
+	if char == 'q' {
+		return "", false
+	}
+	return line, true
 }

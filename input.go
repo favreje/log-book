@@ -12,10 +12,10 @@ import (
 	"unicode/utf8"
 )
 
-func getUserData(logData *LogData) {
+func getUserData(logData *LogData, projectsMap map[int]string) {
 	scanner := bufio.NewScanner(os.Stdin)
 
-	getProjId(logData, scanner)
+	getProjId(logData, scanner, projectsMap)
 	inputDate := getLogDate(scanner)
 	getLogTime("Start", inputDate, logData, scanner)
 	getLogTime("End", inputDate, logData, scanner)
@@ -31,7 +31,7 @@ func getUserData(logData *LogData) {
 	getDescription(logData, scanner)
 }
 
-func getProjId(logData *LogData, scanner *bufio.Scanner) {
+func getProjId(logData *LogData, scanner *bufio.Scanner, projectsMap map[int]string) {
 	for {
 		fmt.Print("Project ID: ")
 		if !scanner.Scan() {
@@ -44,6 +44,13 @@ func getProjId(logData *LogData, scanner *bufio.Scanner) {
 			fmt.Printf("Invalid project ID: %v\n", err)
 			continue
 		}
+
+		projectDesc, ok := projectsMap[projectId]
+		if !ok {
+			fmt.Println("No description matches Project Code:", projectId)
+			continue
+		}
+		fmt.Printf("Project: %s\n", projectDesc)
 		logData.projectId = projectId
 		break
 	}
@@ -186,7 +193,7 @@ func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]stri
 
 		switch char {
 		case 'p':
-			getProjId(logData, scanner)
+			getProjId(logData, scanner, projectsMap)
 			return
 		case 'l':
 			revisedDate := getLogDate(scanner)
