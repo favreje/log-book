@@ -13,32 +13,45 @@ import (
 )
 
 func getUserData(logData *LogData, projectsMap map[int]string) {
-	scanner := bufio.NewScanner(os.Stdin)
-
-	getProjId(logData, scanner, projectsMap)
-	inputDate := getLogDate(scanner)
-	getLogTime("Start", inputDate, logData, scanner)
-	getLogTime("End", inputDate, logData, scanner)
+	displayUserInput(logData, projectsMap)
+	if !getProjId(logData, projectsMap) {
+		return
+	}
+	inputDate, ok := getLogDate(logData, projectsMap)
+	if !ok {
+		return
+	}
+	if !getLogTime("Start", inputDate, logData, projectsMap) {
+		return
+	}
+	if !getLogTime("End", inputDate, logData, projectsMap) {
+		return
+	}
 
 	duration, err := logData.calculateDuration()
 	if err != nil {
-		fmt.Printf("Duration could not be calculated: %v\n", err)
 		return
 	}
 	logData.duration = duration
+	displayUserInput(logData, projectsMap)
 
-	getCategory(logData, scanner)
-	getDescription(logData, scanner)
+	if !getCategory(logData, projectsMap) {
+		return
+	}
+	if !getDescription(logData, projectsMap) {
+		return
+	}
 }
 
-func getProjId(logData *LogData, scanner *bufio.Scanner, projectsMap map[int]string) {
+func getProjId(logData *LogData, projectsMap map[int]string) bool {
 	for {
-		fmt.Print("Project ID: ")
-		if !scanner.Scan() {
-			break
+		userInput, ok := getUserInput("Project ID")
+		if !ok {
+			displayUserInput(logData, projectsMap)
+			return false
 		}
 
-		line := strings.TrimSpace(scanner.Text())
+		line := strings.TrimSpace(userInput)
 		projectId, err := strconv.Atoi(line)
 		if err != nil {
 			fmt.Printf("Invalid project ID: %v\n", err)
@@ -47,6 +60,7 @@ func getProjId(logData *LogData, scanner *bufio.Scanner, projectsMap map[int]str
 
 		projectDesc, ok := projectsMap[projectId]
 		if !ok {
+			displayUserInput(logData, projectsMap)
 			fmt.Println("No description matches Project Code:", projectId)
 			continue
 		}
@@ -54,23 +68,28 @@ func getProjId(logData *LogData, scanner *bufio.Scanner, projectsMap map[int]str
 		logData.projectId = projectId
 		break
 	}
+	displayUserInput(logData, projectsMap)
+	return true
 }
 
-func getLogDate(scanner *bufio.Scanner) time.Time {
+func getLogDate(logData *LogData, projectsMap map[int]string) (time.Time, bool) {
 	// Input date for start time and end time
 	for {
-		fmt.Print("Log Date (MM/DD/YY): ")
-		if !scanner.Scan() {
-			return time.Time{}
+		userInput, ok := getUserInput("Log Date (MM/DD/YY)")
+		if !ok {
+			displayUserInput(logData, projectsMap)
+			return time.Time{}, false
 		}
 
-		line := strings.TrimSpace(scanner.Text())
+		line := strings.TrimSpace(userInput)
 		parsedDate, err := time.Parse("01/02/06", line)
 		if err != nil {
+			displayUserInput(logData, projectsMap)
 			fmt.Printf("Invalid Input Date: %v\n", err)
 			continue
 		}
-		return parsedDate
+		displayUserInput(logData, projectsMap)
+		return parsedDate, true
 	}
 }
 
@@ -78,25 +97,27 @@ func getLogTime(
 	boundaryType string,
 	inputDate time.Time,
 	logData *LogData,
-	scanner *bufio.Scanner,
-) {
+	projectsMap map[int]string,
+) bool {
 	// Populates logData.startTime or logData.endTime based on boundaryType
 	if !(boundaryType == "Start" || boundaryType == "End") {
-		fmt.Printf("Invalid boundaryType: %v\n", boundaryType)
-		return
+		log.Fatalf("Invalid boundaryType: %v\n", boundaryType)
 	}
 	for {
-		fmt.Printf("%s Time (HH:MM): ", boundaryType)
-		if !scanner.Scan() {
-			break
+		prompt := boundaryType + "Time (HH:MM)"
+		userInput, ok := getUserInput(prompt)
+		if !ok {
+			logData.startTime = inputDate
+			logData.endTime = inputDate
+			displayUserInput(logData, projectsMap)
+			return false
 		}
-
-		line := strings.TrimSpace(scanner.Text())
+		line := strings.TrimSpace(userInput)
 		dateString := inputDate.Format("01/02/06") + " " + line
 		layout := "01/02/06 15:04"
-		// inputTime, err := time.Parse(layout, dateString)
 		inputTime, err := time.ParseInLocation(layout, dateString, time.Local)
 		if err != nil {
+			displayUserInput(logData, projectsMap)
 			fmt.Printf("Invalid %s Time: %v\n", boundaryType, err)
 			continue
 		}
@@ -107,38 +128,48 @@ func getLogTime(
 		logData.endTime = inputTime
 		break
 	}
+	displayUserInput(logData, projectsMap)
+	return true
 }
 
-func getCategory(logData *LogData, scanner *bufio.Scanner) {
+func getCategory(logData *LogData, projectsMap map[int]string) bool {
 	for {
-		fmt.Print("Category: ")
-		if !scanner.Scan() {
-			break
+		userInput, ok := getUserInput("Category")
+		if !ok {
+			displayUserInput(logData, projectsMap)
+			return false
 		}
-		line := strings.TrimSpace(scanner.Text())
+		line := strings.TrimSpace(userInput)
 		if line == "" {
-			fmt.Println("No category was entered")
+			displayUserInput(logData, projectsMap)
+			fmt.Println("Please provide a project category.")
 			continue
 		}
 		logData.category = line
 		break
 	}
+	displayUserInput(logData, projectsMap)
+	return true
 }
 
-func getDescription(logData *LogData, scanner *bufio.Scanner) {
+func getDescription(logData *LogData, projectsMap map[int]string) bool {
 	for {
-		fmt.Print("Description: ")
-		if !scanner.Scan() {
-			break
+		userInput, ok := getUserInput("Description")
+		if !ok {
+			displayUserInput(logData, projectsMap)
+			return false
 		}
-		line := strings.TrimSpace(scanner.Text())
+		line := strings.TrimSpace(userInput)
 		if line == "" {
+			displayUserInput(logData, projectsMap)
 			fmt.Println("No description was entered")
 			continue
 		}
 		logData.description = line
 		break
 	}
+	displayUserInput(logData, projectsMap)
+	return true
 }
 
 func userConfirmation(db *sql.DB, logData *LogData, projectsMap map[int]string) {
@@ -166,7 +197,7 @@ func userConfirmation(db *sql.DB, logData *LogData, projectsMap map[int]string) 
 		case 'e':
 			userEdit(scanner, logData, projectsMap)
 		case 'c':
-			fmt.Println("Cancelling the log entry...")
+			*logData = LogData{}
 			return
 		default:
 			fmt.Printf("%s is invalid. Please enter again.", line)
@@ -176,12 +207,13 @@ func userConfirmation(db *sql.DB, logData *LogData, projectsMap map[int]string) 
 }
 
 func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]string) {
+outerLoop:
 	for {
 		displayUserInput(logData, projectsMap)
 		fmt.Println("EDIT MODE:")
 		fmt.Println(strings.Repeat("-", 80))
 		fmt.Println(
-			"(P)roject ID | (L)og date | (S)tart time | (E)nd time | (C)ategory | (D)escription | (Q)uit ",
+			"(P)roject ID | (L)og date | (S)tart time | (E)nd time | (C)ategory | (D)escription | (R)eturn",
 		)
 		fmt.Print("Selection: ")
 		if !scanner.Scan() {
@@ -193,10 +225,13 @@ func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]stri
 
 		switch char {
 		case 'p':
-			getProjId(logData, scanner, projectsMap)
-			return
+			getProjId(logData, projectsMap)
+			continue outerLoop
 		case 'l':
-			revisedDate := getLogDate(scanner)
+			revisedDate, ok := getLogDate(logData, projectsMap)
+			if !ok {
+				continue outerLoop
+			}
 			layout := "01/02/06 15:04"
 			// Revise start time
 			timeString := logData.startTime.Format("15:04")
@@ -218,34 +253,28 @@ func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]stri
 				continue
 			}
 			logData.endTime = revisedTime
-			return
+			continue outerLoop
 		case 's':
-			getLogTime("Start", logData.startTime, logData, scanner)
+			getLogTime("Start", logData.startTime, logData, projectsMap)
 			recalculatedDuration, err := logData.calculateDuration()
-			if err != nil {
-				fmt.Printf("Duration could not be calculated: %v\n", err)
-				time.Sleep(1750 * time.Millisecond)
-				return
+			if err == nil {
+				logData.duration = recalculatedDuration
 			}
-			logData.duration = recalculatedDuration
-			return
+			continue outerLoop
 		case 'e':
-			getLogTime("End", logData.endTime, logData, scanner)
+			getLogTime("End", logData.endTime, logData, projectsMap)
 			recalculatedDuration, err := logData.calculateDuration()
-			if err != nil {
-				fmt.Printf("Duration could not be calculated: %v\n", err)
-				time.Sleep(1750 * time.Millisecond)
-				return
+			if err == nil {
+				logData.duration = recalculatedDuration
 			}
-			logData.duration = recalculatedDuration
-			return
+			continue outerLoop
 		case 'c':
-			getCategory(logData, scanner)
-			return
+			getCategory(logData, projectsMap)
+			continue outerLoop
 		case 'd':
-			getDescription(logData, scanner)
-			return
-		case 'q':
+			getDescription(logData, projectsMap)
+			continue outerLoop
+		case 'r':
 			return
 		default:
 			fmt.Printf("%s is invalid. Please enter again.", line)

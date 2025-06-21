@@ -35,7 +35,8 @@ func confirmedSelection(msg string) bool {
 }
 
 func getUserInput(prompt string) (string, bool) {
-	fmt.Printf("%s ('Q' to Quit): ", prompt)
+	fmt.Println("Ctrl-D to Exit")
+	fmt.Printf("%s: ", prompt)
 	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
 		if err := scanner.Err(); err != nil {
@@ -44,10 +45,5 @@ func getUserInput(prompt string) (string, bool) {
 		return "", false
 	}
 	line := strings.TrimSpace(scanner.Text())
-	lowerline := strings.ToLower(line)
-	char, _ := utf8.DecodeRuneInString(lowerline)
-	if char == 'q' {
-		return "", false
-	}
 	return line, true
 }

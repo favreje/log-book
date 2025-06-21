@@ -13,8 +13,7 @@ func clearScreen() {
 func displayUserInput(logData *LogData, projectsMap map[int]string) {
 	projectDesc, ok := projectsMap[logData.projectId]
 	if !ok {
-		fmt.Println("No description matches Project Code:", logData.projectId)
-		return
+		projectDesc = strings.Repeat("*", 15)
 	}
 
 	clearScreen()
@@ -22,14 +21,24 @@ func displayUserInput(logData *LogData, projectsMap map[int]string) {
 	fmt.Println(strings.Repeat(" ", 30), "Log Entry")
 	fmt.Println(strings.Repeat("-", 80))
 
-	fmt.Printf("%-20s %02d \n", "Project ID:", logData.projectId)
+	if logData.projectId == 0 {
+		fmt.Printf("%-20s %s \n", "Project ID:", "**")
+	} else {
+		fmt.Printf("%-20s %02d \n", "Project ID:", logData.projectId)
+	}
 	fmt.Printf("%-20s %s \n", "Project Description:", projectDesc)
 	timeLayout := "01/02/06 15:04"
-	fmt.Printf(
-		"Start time: %23s \nEnd time: %25s \n",
-		logData.startTime.Format(timeLayout),
-		logData.endTime.Format(timeLayout),
-	)
+	if logData.startTime.IsZero() {
+		fmt.Printf("Start time: %23s\n", "MM/DD/YY HH:MM")
+	} else {
+		fmt.Printf("Start time: %23s\n", logData.startTime.Format(timeLayout))
+	}
+
+	if logData.endTime.IsZero() {
+		fmt.Printf("End time: %25s\n", "MM/DD/YY HH:MM")
+	} else {
+		fmt.Printf("End time: %25s\n", logData.endTime.Format(timeLayout))
+	}
 
 	fmt.Printf(
 		"%-20s %2.2f hrs\n",
@@ -37,8 +46,17 @@ func displayUserInput(logData *LogData, projectsMap map[int]string) {
 		logData.duration.Hours(),
 	)
 
-	fmt.Printf("%-20s %s\n", "Category:", logData.category)
-	fmt.Printf("%-20s %s\n", "Description:", logData.description)
+	if logData.category == "" {
+		fmt.Printf("%-20s %s\n", "Category:", strings.Repeat("*", 15))
+	} else {
+		fmt.Printf("%-20s %s\n", "Category:", logData.category)
+	}
+
+	if logData.description == "" {
+		fmt.Printf("%-20s %s\n", "Description:", strings.Repeat("*", 25))
+	} else {
+		fmt.Printf("%-20s %s\n", "Description:", logData.description)
+	}
 
 	fmt.Println(strings.Repeat("-", 80))
 }
@@ -48,9 +66,9 @@ func displayMainMenu() {
 	fmt.Println(strings.Repeat("-", 30))
 	fmt.Println(strings.Repeat(" ", 10), "MAIN MENU")
 	fmt.Println(strings.Repeat("-", 30))
-	fmt.Println("1. (I)nput log entry")
-	fmt.Println("2. (D)isplay log report")
-	fmt.Println("3. (E)xit")
+	fmt.Println("(I)nput log entry")
+	fmt.Println("(D)isplay log report")
+	fmt.Println("(E)xit")
 	fmt.Println(strings.Repeat("-", 30))
 	fmt.Print("Selection: ")
 }

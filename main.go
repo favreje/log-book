@@ -37,10 +37,10 @@ func main() {
 		char, _ := utf8.DecodeRuneInString(lowerline)
 
 		switch char {
-		case '1', 'i':
+		case 'i':
 			getUserData(logData, projectsMap)
 			userConfirmation(db, logData, projectsMap)
-		case '2', 'd':
+		case 'd':
 			projectId, err := selectProject(projectsMap)
 			if err != nil {
 				log.Fatal(err)
@@ -51,7 +51,7 @@ func main() {
 			}
 			reportByProject(logRecords, projectsMap)
 			return
-		case '3', 'e':
+		case 'e':
 			fmt.Println("Exiting the application...")
 			return
 		}
