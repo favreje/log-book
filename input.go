@@ -88,6 +88,8 @@ func getLogDate(logData *LogData, projectsMap map[int]string) (time.Time, bool) 
 			fmt.Printf("Invalid Input Date: %v\n", err)
 			continue
 		}
+		logData.startTime = parsedDate
+		logData.endTime = parsedDate
 		displayUserInput(logData, projectsMap)
 		return parsedDate, true
 	}
@@ -225,9 +227,11 @@ outerLoop:
 
 		switch char {
 		case 'p':
+			displayUserInput(logData, projectsMap)
 			getProjId(logData, projectsMap)
 			continue outerLoop
 		case 'l':
+			displayUserInput(logData, projectsMap)
 			revisedDate, ok := getLogDate(logData, projectsMap)
 			if !ok {
 				continue outerLoop
@@ -255,6 +259,7 @@ outerLoop:
 			logData.endTime = revisedTime
 			continue outerLoop
 		case 's':
+			displayUserInput(logData, projectsMap)
 			getLogTime("Start", logData.startTime, logData, projectsMap)
 			recalculatedDuration, err := logData.calculateDuration()
 			if err == nil {
@@ -262,6 +267,7 @@ outerLoop:
 			}
 			continue outerLoop
 		case 'e':
+			displayUserInput(logData, projectsMap)
 			getLogTime("End", logData.endTime, logData, projectsMap)
 			recalculatedDuration, err := logData.calculateDuration()
 			if err == nil {
@@ -269,9 +275,11 @@ outerLoop:
 			}
 			continue outerLoop
 		case 'c':
+			displayUserInput(logData, projectsMap)
 			getCategory(logData, projectsMap)
 			continue outerLoop
 		case 'd':
+			displayUserInput(logData, projectsMap)
 			getDescription(logData, projectsMap)
 			continue outerLoop
 		case 'r':
