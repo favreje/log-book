@@ -26,3 +26,10 @@ func (l LogData) calculateDuration() (time.Duration, error) {
 	}
 	return l.endTime.Sub(l.startTime), nil
 }
+
+type InputState struct {
+	dateEntered      bool
+	startTimeEntered bool
+	endTimeEntered   bool
+	baseDate         time.Time
+}

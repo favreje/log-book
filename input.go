@@ -12,19 +12,18 @@ import (
 	"unicode/utf8"
 )
 
-func getUserData(logData *LogData, projectsMap map[int]string) {
-	displayUserInput(logData, projectsMap)
-	if !getProjId(logData, projectsMap) {
+func getUserData(logData *LogData, projectsMap map[int]string, inputState *InputState) {
+	displayUserInput(logData, projectsMap, inputState)
+	if !getProjId(logData, projectsMap, inputState) {
 		return
 	}
-	inputDate, ok := getLogDate(logData, projectsMap)
-	if !ok {
+	if !getLogDate(logData, projectsMap, inputState) {
 		return
 	}
-	if !getLogTime("Start", inputDate, logData, projectsMap) {
+	if !getLogTime("Start", logData, projectsMap, inputState) {
 		return
 	}
-	if !getLogTime("End", inputDate, logData, projectsMap) {
+	if !getLogTime("End", logData, projectsMap, inputState) {
 		return
 	}
 
@@ -33,21 +32,21 @@ func getUserData(logData *LogData, projectsMap map[int]string) {
 		return
 	}
 	logData.duration = duration
-	displayUserInput(logData, projectsMap)
+	displayUserInput(logData, projectsMap, inputState)
 
-	if !getCategory(logData, projectsMap) {
+	if !getCategory(logData, projectsMap, inputState) {
 		return
 	}
-	if !getDescription(logData, projectsMap) {
+	if !getDescription(logData, projectsMap, inputState) {
 		return
 	}
 }
 
-func getProjId(logData *LogData, projectsMap map[int]string) bool {
+func getProjId(logData *LogData, projectsMap map[int]string, inputState *InputState) bool {
 	for {
 		userInput, ok := getUserInput("Project ID")
 		if !ok {
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			return false
 		}
 
@@ -60,7 +59,7 @@ func getProjId(logData *LogData, projectsMap map[int]string) bool {
 
 		projectDesc, ok := projectsMap[projectId]
 		if !ok {
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			fmt.Println("No description matches Project Code:", projectId)
 			continue
 		}
@@ -68,50 +67,62 @@ func getProjId(logData *LogData, projectsMap map[int]string) bool {
 		logData.projectId = projectId
 		break
 	}
-	displayUserInput(logData, projectsMap)
+	displayUserInput(logData, projectsMap, inputState)
 	return true
 }
 
-func getLogDate(logData *LogData, projectsMap map[int]string) (time.Time, bool) {
+func getLogDate(
+	logData *LogData,
+	projectsMap map[int]string,
+	inputState *InputState,
+) bool {
 	// Input date for start time and end time
 	for {
 		userInput, ok := getUserInput("Log Date (MM/DD/YY)")
 		if !ok {
-			displayUserInput(logData, projectsMap)
-			return time.Time{}, false
+			displayUserInput(logData, projectsMap, inputState)
+			return false
 		}
 
 		line := strings.TrimSpace(userInput)
 		parsedDate, err := time.Parse("01/02/06", line)
 		if err != nil {
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			fmt.Printf("Invalid Input Date: %v\n", err)
 			continue
 		}
-		logData.startTime = parsedDate
-		logData.endTime = parsedDate
-		displayUserInput(logData, projectsMap)
-		return parsedDate, true
+		inputState.dateEntered = true
+		inputState.baseDate = parsedDate
+		displayUserInput(logData, projectsMap, inputState)
+		return true
 	}
 }
 
 func getLogTime(
 	boundaryType string,
-	inputDate time.Time,
 	logData *LogData,
 	projectsMap map[int]string,
+	inputState *InputState,
 ) bool {
 	// Populates logData.startTime or logData.endTime based on boundaryType
 	if !(boundaryType == "Start" || boundaryType == "End") {
 		log.Fatalf("Invalid boundaryType: %v\n", boundaryType)
 	}
+
+	// First ensure that a date has been entered, and if not, go do that first
+	if !inputState.dateEntered {
+		if !getLogDate(logData, projectsMap, inputState) {
+			return false
+		}
+	}
+
+	inputDate := inputState.baseDate
+
 	for {
 		prompt := boundaryType + "Time (HH:MM)"
 		userInput, ok := getUserInput(prompt)
 		if !ok {
-			logData.startTime = inputDate
-			logData.endTime = inputDate
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			return false
 		}
 		line := strings.TrimSpace(userInput)
@@ -119,65 +130,72 @@ func getLogTime(
 		layout := "01/02/06 15:04"
 		inputTime, err := time.ParseInLocation(layout, dateString, time.Local)
 		if err != nil {
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			fmt.Printf("Invalid %s Time: %v\n", boundaryType, err)
 			continue
 		}
 		if boundaryType == "Start" {
+			inputState.startTimeEntered = true
 			logData.startTime = inputTime
 			break
 		}
+		inputState.endTimeEntered = true
 		logData.endTime = inputTime
 		break
 	}
-	displayUserInput(logData, projectsMap)
+	displayUserInput(logData, projectsMap, inputState)
 	return true
 }
 
-func getCategory(logData *LogData, projectsMap map[int]string) bool {
+func getCategory(logData *LogData, projectsMap map[int]string, inputState *InputState) bool {
 	for {
 		userInput, ok := getUserInput("Category")
 		if !ok {
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			return false
 		}
 		line := strings.TrimSpace(userInput)
 		if line == "" {
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			fmt.Println("Please provide a project category.")
 			continue
 		}
 		logData.category = line
 		break
 	}
-	displayUserInput(logData, projectsMap)
+	displayUserInput(logData, projectsMap, inputState)
 	return true
 }
 
-func getDescription(logData *LogData, projectsMap map[int]string) bool {
+func getDescription(logData *LogData, projectsMap map[int]string, inputState *InputState) bool {
 	for {
 		userInput, ok := getUserInput("Description")
 		if !ok {
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			return false
 		}
 		line := strings.TrimSpace(userInput)
 		if line == "" {
-			displayUserInput(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
 			fmt.Println("No description was entered")
 			continue
 		}
 		logData.description = line
 		break
 	}
-	displayUserInput(logData, projectsMap)
+	displayUserInput(logData, projectsMap, inputState)
 	return true
 }
 
-func userConfirmation(db *sql.DB, logData *LogData, projectsMap map[int]string) {
+func userConfirmation(
+	db *sql.DB,
+	logData *LogData,
+	projectsMap map[int]string,
+	inputState *InputState,
+) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		displayUserInput(logData, projectsMap)
+		displayUserInput(logData, projectsMap, inputState)
 		fmt.Println("(W)rite | (E)dit | (C)ancel")
 		fmt.Print("Selection: ")
 		if !scanner.Scan() {
@@ -197,9 +215,10 @@ func userConfirmation(db *sql.DB, logData *LogData, projectsMap map[int]string) 
 			fmt.Printf("Successfully saved log entry with ID: %d\n", insertId)
 			return
 		case 'e':
-			userEdit(scanner, logData, projectsMap)
+			userEdit(scanner, logData, projectsMap, inputState)
 		case 'c':
 			*logData = LogData{}
+			*inputState = InputState{}
 			return
 		default:
 			fmt.Printf("%s is invalid. Please enter again.", line)
@@ -208,10 +227,15 @@ func userConfirmation(db *sql.DB, logData *LogData, projectsMap map[int]string) 
 	}
 }
 
-func userEdit(scanner *bufio.Scanner, logData *LogData, projectsMap map[int]string) {
+func userEdit(
+	scanner *bufio.Scanner,
+	logData *LogData,
+	projectsMap map[int]string,
+	inputState *InputState,
+) {
 outerLoop:
 	for {
-		displayUserInput(logData, projectsMap)
+		displayUserInput(logData, projectsMap, inputState)
 		fmt.Println("EDIT MODE:")
 		fmt.Println(strings.Repeat("-", 80))
 		fmt.Println(
@@ -227,60 +251,68 @@ outerLoop:
 
 		switch char {
 		case 'p':
-			displayUserInput(logData, projectsMap)
-			getProjId(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
+			getProjId(logData, projectsMap, inputState)
 			continue outerLoop
 		case 'l':
-			displayUserInput(logData, projectsMap)
-			revisedDate, ok := getLogDate(logData, projectsMap)
-			if !ok {
+			displayUserInput(logData, projectsMap, inputState)
+			if !getLogDate(logData, projectsMap, inputState) {
 				continue outerLoop
 			}
+
 			layout := "01/02/06 15:04"
 			// Revise start time
-			timeString := logData.startTime.Format("15:04")
-			dateString := revisedDate.Format("01/02/06") + " " + timeString
-			revisedTime, err := time.ParseInLocation(layout, dateString, time.Local)
-			if err != nil {
-				fmt.Printf("Invalid Start Time: %v\n", err)
-				continue
+			if inputState.startTimeEntered {
+				timeString := logData.startTime.Format("15:04")
+				dateString := inputState.baseDate.Format("01/02/06") + " " + timeString
+				revisedTime, err := time.ParseInLocation(layout, dateString, time.Local)
+				if err != nil {
+					fmt.Printf("Invalid Start Time: %v\n", err)
+					continue
+				}
+				logData.startTime = revisedTime
 			}
-			logData.startTime = revisedTime
 
 			// Revise end time
-			timeString = logData.endTime.Format("15:04")
-			dateString = revisedDate.Format("01/02/06") + " " + timeString
+			if inputState.endTimeEntered {
+				timeString := logData.endTime.Format("15:04")
+				dateString := inputState.baseDate.Format("01/02/06") + " " + timeString
 
-			revisedTime, err = time.ParseInLocation(layout, dateString, time.Local)
-			if err != nil {
-				fmt.Printf("Invalid End Time: %v\n", err)
-				continue
+				revisedTime, err := time.ParseInLocation(layout, dateString, time.Local)
+				if err != nil {
+					fmt.Printf("Invalid End Time: %v\n", err)
+					continue
+				}
+				logData.endTime = revisedTime
 			}
-			logData.endTime = revisedTime
 			continue outerLoop
 		case 's':
-			displayUserInput(logData, projectsMap)
-			getLogTime("Start", logData.startTime, logData, projectsMap)
-			recalculatedDuration, err := logData.calculateDuration()
-			if err == nil {
-				logData.duration = recalculatedDuration
+			displayUserInput(logData, projectsMap, inputState)
+			getLogTime("Start", logData, projectsMap, inputState)
+			if inputState.startTimeEntered && inputState.endTimeEntered {
+				recalculatedDuration, err := logData.calculateDuration()
+				if err == nil {
+					logData.duration = recalculatedDuration
+				}
 			}
 			continue outerLoop
 		case 'e':
-			displayUserInput(logData, projectsMap)
-			getLogTime("End", logData.endTime, logData, projectsMap)
-			recalculatedDuration, err := logData.calculateDuration()
-			if err == nil {
-				logData.duration = recalculatedDuration
+			displayUserInput(logData, projectsMap, inputState)
+			getLogTime("End", logData, projectsMap, inputState)
+			if inputState.startTimeEntered && inputState.endTimeEntered {
+				recalculatedDuration, err := logData.calculateDuration()
+				if err == nil {
+					logData.duration = recalculatedDuration
+				}
 			}
 			continue outerLoop
 		case 'c':
-			displayUserInput(logData, projectsMap)
-			getCategory(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
+			getCategory(logData, projectsMap, inputState)
 			continue outerLoop
 		case 'd':
-			displayUserInput(logData, projectsMap)
-			getDescription(logData, projectsMap)
+			displayUserInput(logData, projectsMap, inputState)
+			getDescription(logData, projectsMap, inputState)
 			continue outerLoop
 		case 'r':
 			return

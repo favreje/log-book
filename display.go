@@ -10,7 +10,7 @@ func clearScreen() {
 	fmt.Print("\033[H\033[2J")
 }
 
-func displayUserInput(logData *LogData, projectsMap map[int]string) {
+func displayUserInput(logData *LogData, projectsMap map[int]string, inputState *InputState) {
 	projectDesc, ok := projectsMap[logData.projectId]
 	if !ok {
 		projectDesc = strings.Repeat("*", 15)
@@ -27,24 +27,32 @@ func displayUserInput(logData *LogData, projectsMap map[int]string) {
 		fmt.Printf("%-20s %02d \n", "Project ID:", logData.projectId)
 	}
 	fmt.Printf("%-20s %s \n", "Project Description:", projectDesc)
+
+	// Start time display
 	timeLayout := "01/02/06 15:04"
-	if logData.startTime.IsZero() {
-		fmt.Printf("Start time: %23s\n", "MM/DD/YY HH:MM")
-	} else {
+	if inputState.dateEntered && inputState.startTimeEntered {
 		fmt.Printf("Start time: %23s\n", logData.startTime.Format(timeLayout))
-	}
-
-	if logData.endTime.IsZero() {
-		fmt.Printf("End time: %25s\n", "MM/DD/YY HH:MM")
+	} else if inputState.dateEntered {
+		fmt.Printf("Start time: %17s --:--\n", inputState.baseDate.Format("01/02/06"))
 	} else {
-		fmt.Printf("End time: %25s\n", logData.endTime.Format(timeLayout))
+		fmt.Printf("Start time: %23s\n", "MM/DD/YY HH:MM")
 	}
 
-	fmt.Printf(
-		"%-20s %2.2f hrs\n",
-		"Duration:",
-		logData.duration.Hours(),
-	)
+	// End time display
+	if inputState.dateEntered && inputState.endTimeEntered {
+		fmt.Printf("End time: %25s\n", logData.endTime.Format(timeLayout))
+	} else if inputState.dateEntered {
+		fmt.Printf("End time: %19s --:--\n", inputState.baseDate.Format("01/02/06"))
+	} else {
+		fmt.Printf("End time: %25s\n", "MM/DD/YY HH:MM")
+	}
+
+	// Display duration if we have start and end times
+	if inputState.startTimeEntered && inputState.endTimeEntered {
+		fmt.Printf("%-20s %2.2f hrs\n", "Duration:", logData.duration.Hours())
+	} else {
+		fmt.Printf("%-20s %s\n", "Duration:", "--.-- hrs")
+	}
 
 	if logData.category == "" {
 		fmt.Printf("%-20s %s\n", "Category:", strings.Repeat("*", 15))
@@ -136,7 +144,7 @@ func reportByProject(logRecords []LogData, projectsMap map[int]string) {
 		durationTotal += record.duration.Hours()
 
 		fmt.Printf(
-			"%2d %*s %s %s %s %s %4.2f %*s %s\n",
+			"%02d %*s %s %s %s %s %4.2f %*s %s\n",
 			record.projectId,
 			-projectDescLen,
 			projectDesc,

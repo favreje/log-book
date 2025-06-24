@@ -25,6 +25,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	inputState := &InputState{}
+
 	// Main menu
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -38,8 +40,8 @@ func main() {
 
 		switch char {
 		case 'i':
-			getUserData(logData, projectsMap)
-			userConfirmation(db, logData, projectsMap)
+			getUserData(logData, projectsMap, inputState)
+			userConfirmation(db, logData, projectsMap, inputState)
 		case 'd':
 			projectId, err := selectProject(projectsMap)
 			if err != nil {
