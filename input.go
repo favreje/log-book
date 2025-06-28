@@ -14,6 +14,7 @@ import (
 
 func getUserData(logData *LogData, projectsMap map[int]string, inputState *InputState) {
 	displayUserInput(logData, projectsMap, inputState)
+	fmt.Println("INPUT MODE")
 	if !getProjId(logData, projectsMap, inputState) {
 		return
 	}
@@ -33,6 +34,7 @@ func getUserData(logData *LogData, projectsMap map[int]string, inputState *Input
 	}
 	logData.duration = duration
 	displayUserInput(logData, projectsMap, inputState)
+	fmt.Println("INPUT MODE")
 
 	if !getCategory(logData, projectsMap, inputState) {
 		return
@@ -47,6 +49,7 @@ func getProjId(logData *LogData, projectsMap map[int]string, inputState *InputSt
 		userInput, ok := getUserInput("Project ID")
 		if !ok {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			return false
 		}
 
@@ -60,6 +63,7 @@ func getProjId(logData *LogData, projectsMap map[int]string, inputState *InputSt
 		projectDesc, ok := projectsMap[projectId]
 		if !ok {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			fmt.Println("No description matches Project Code:", projectId)
 			continue
 		}
@@ -68,6 +72,7 @@ func getProjId(logData *LogData, projectsMap map[int]string, inputState *InputSt
 		break
 	}
 	displayUserInput(logData, projectsMap, inputState)
+	fmt.Println("INPUT MODE")
 	return true
 }
 
@@ -81,6 +86,7 @@ func getLogDate(
 		userInput, ok := getUserInput("Log Date (MM/DD/YY)")
 		if !ok {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			return false
 		}
 
@@ -88,12 +94,14 @@ func getLogDate(
 		parsedDate, err := time.Parse("01/02/06", line)
 		if err != nil {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			fmt.Printf("Invalid Input Date: %v\n", err)
 			continue
 		}
 		inputState.dateEntered = true
 		inputState.baseDate = parsedDate
 		displayUserInput(logData, projectsMap, inputState)
+		fmt.Println("INPUT MODE")
 		return true
 	}
 }
@@ -123,6 +131,7 @@ func getLogTime(
 		userInput, ok := getUserInput(prompt)
 		if !ok {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			return false
 		}
 		line := strings.TrimSpace(userInput)
@@ -131,6 +140,7 @@ func getLogTime(
 		inputTime, err := time.ParseInLocation(layout, dateString, time.Local)
 		if err != nil {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			fmt.Printf("Invalid %s Time: %v\n", boundaryType, err)
 			continue
 		}
@@ -144,6 +154,7 @@ func getLogTime(
 		break
 	}
 	displayUserInput(logData, projectsMap, inputState)
+	fmt.Println("INPUT MODE")
 	return true
 }
 
@@ -152,11 +163,13 @@ func getCategory(logData *LogData, projectsMap map[int]string, inputState *Input
 		userInput, ok := getUserInput("Category")
 		if !ok {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			return false
 		}
 		line := strings.TrimSpace(userInput)
 		if line == "" {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			fmt.Println("Please provide a project category.")
 			continue
 		}
@@ -164,6 +177,7 @@ func getCategory(logData *LogData, projectsMap map[int]string, inputState *Input
 		break
 	}
 	displayUserInput(logData, projectsMap, inputState)
+	fmt.Println("INPUT MODE")
 	return true
 }
 
@@ -172,11 +186,13 @@ func getDescription(logData *LogData, projectsMap map[int]string, inputState *In
 		userInput, ok := getUserInput("Description")
 		if !ok {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			return false
 		}
 		line := strings.TrimSpace(userInput)
 		if line == "" {
 			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
 			fmt.Println("No description was entered")
 			continue
 		}
@@ -184,6 +200,7 @@ func getDescription(logData *LogData, projectsMap map[int]string, inputState *In
 		break
 	}
 	displayUserInput(logData, projectsMap, inputState)
+	fmt.Println("INPUT MODE")
 	return true
 }
 
@@ -199,7 +216,11 @@ func userConfirmation(
 		fmt.Println("(W)rite | (E)dit | (C)ancel")
 		fmt.Print("Selection: ")
 		if !scanner.Scan() {
-			return
+			if err := scanner.Err(); err != nil {
+				log.Fatalf("Error reading input: %v", err)
+			}
+			scanner = bufio.NewScanner(os.Stdin)
+			continue
 		}
 		line := strings.TrimSpace(scanner.Text())
 		lowerLine := strings.ToLower(line)
@@ -207,12 +228,14 @@ func userConfirmation(
 
 		switch char {
 		case 'w':
-			fmt.Println("Writing data to log...")
 			insertId, err := writeLogEntry(db, logData)
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("Successfully saved log entry with ID: %d\n", insertId)
+			statusMsg := fmt.Sprintf("Successfully saved log entry with ID: %d", insertId)
+			*logData = LogData{}
+			*inputState = InputState{}
+			inputState.statusMsg = statusMsg
 			return
 		case 'e':
 			userEdit(scanner, logData, projectsMap, inputState)
@@ -236,14 +259,18 @@ func userEdit(
 outerLoop:
 	for {
 		displayUserInput(logData, projectsMap, inputState)
-		fmt.Println("EDIT MODE:")
+		fmt.Println("EDIT MODE")
 		fmt.Println(strings.Repeat("-", 80))
 		fmt.Println(
 			"(P)roject ID | (L)og date | (S)tart time | (E)nd time | (C)ategory | (D)escription | (R)eturn",
 		)
 		fmt.Print("Selection: ")
 		if !scanner.Scan() {
-			return
+			if err := scanner.Err(); err != nil {
+				log.Fatalf("Error reading input: %v", err)
+			}
+			scanner = bufio.NewScanner(os.Stdin)
+			continue
 		}
 		line := strings.TrimSpace(scanner.Text())
 		lowerline := strings.ToLower(line)

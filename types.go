@@ -32,4 +32,5 @@ type InputState struct {
 	startTimeEntered bool
 	endTimeEntered   bool
 	baseDate         time.Time
+	statusMsg        string
 }

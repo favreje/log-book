@@ -30,9 +30,13 @@ func main() {
 	// Main menu
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		displayMainMenu()
+		displayMainMenu(inputState)
 		if !scanner.Scan() {
-			return
+			if err := scanner.Err(); err != nil {
+				log.Fatalf("Error reading input: %v", err)
+			}
+			scanner = bufio.NewScanner(os.Stdin)
+			continue
 		}
 		line := strings.TrimSpace(scanner.Text())
 		lowerline := strings.ToLower(line)

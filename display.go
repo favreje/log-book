@@ -69,15 +69,25 @@ func displayUserInput(logData *LogData, projectsMap map[int]string, inputState *
 	fmt.Println(strings.Repeat("-", 80))
 }
 
-func displayMainMenu() {
+func displayMainMenu(inputState *InputState) {
+	rightMargin := 30
+	if inputState.statusMsg != "" {
+		rightMargin = len(inputState.statusMsg)
+	}
 	clearScreen()
-	fmt.Println(strings.Repeat("-", 30))
+	fmt.Println(strings.Repeat("-", rightMargin))
 	fmt.Println(strings.Repeat(" ", 10), "MAIN MENU")
-	fmt.Println(strings.Repeat("-", 30))
+	fmt.Println(strings.Repeat("-", rightMargin))
 	fmt.Println("(I)nput log entry")
 	fmt.Println("(D)isplay log report")
 	fmt.Println("(E)xit")
-	fmt.Println(strings.Repeat("-", 30))
+	fmt.Println(strings.Repeat("-", rightMargin))
+	if inputState.statusMsg != "" {
+		fmt.Println("STATUS MESSAGE")
+		fmt.Printf("%s\n", inputState.statusMsg)
+		fmt.Println(strings.Repeat("-", rightMargin))
+		inputState.statusMsg = ""
+	}
 	fmt.Print("Selection: ")
 }
 

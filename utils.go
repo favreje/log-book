@@ -40,7 +40,7 @@ func getUserInput(prompt string) (string, bool) {
 	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
 		if err := scanner.Err(); err != nil {
-			log.Fatal()
+			log.Fatalf("Error reading input: %v", err)
 		}
 		return "", false
 	}
