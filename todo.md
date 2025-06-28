@@ -1,20 +1,27 @@
 # LOG-BOOK PROJECT
 ## OPEN ISSUES LIST
 ---------------------------------------------------------------------------------------------------
-### improved_user_input
-- [ ] 2025-06-27: See if there are any other uses for inputState.statusMsg
-
-- [ ] 2025-06-27: Add Ctrl-D safety to the project selection and display screens
-
-- [ ] 2025-06-27: If project selection is incorrect, immediately bring user to the helpful list of
-                  available projects
-
-- [ ] 2025-06-27: Add a more helpful error message when user selected an out-of-range project, or
-                  nothing at all. Rebuild the project list screen, and add a STATUS MESSAGE
-                  section, similar to the main menu solution
-         
 ### validation_before_write
+- [ ] 2025-06-28: If endTime before startTime, ask user if they intended to extend to the next day,
+                  and if so, increment endTime date; if not, return user to endTime entry
+    - Let's do this validation check at user input (i.e., real time validation)
+
 - [ ] 2025-06-21: Create validation function before writing to SQL database
+
+**Not Allowed:**
+- No zero values for any fields
+- No endTime before startTime
+- Dates before 2000
+
+Ask user if intention was to span to the next day, if so, increment endTime date; otherwise, take
+user to edit screen (we're not sure which date or time is incorrect, so let's not assume and go
+directly to either startTime or endTime)
+
+**Warning:**
+- Duration > 6 hrs
+- Date > one month before current date
+- Category or Description entries <= 3 characters
+
 
 ### reporting_feature
 - [ ] 2025-06-24: Add export to Excel (or csv if I get lazy)
@@ -56,3 +63,13 @@
                   a string field to InputState statusMsg to hold values that we want to display
                   after the menu display 
 
+- [x] 2025-06-27: See if there are any other uses for inputState.statusMsg
+
+- [x] 2025-06-27: Add Ctrl-D exit functionality to the project selection screen
+
+- [x] 2025-06-27: If project selection is incorrect, immediately bring user to the helpful list of
+                  available projects
+
+- [x] 2025-06-27: Add a more helpful error message when user selected an out-of-range project, or
+                  nothing at all. Rebuild the project list screen, and add a STATUS MESSAGE
+                  section, similar to the main menu solution

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"database/sql"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -56,7 +57,9 @@ func getProjId(logData *LogData, projectsMap map[int]string, inputState *InputSt
 		line := strings.TrimSpace(userInput)
 		projectId, err := strconv.Atoi(line)
 		if err != nil {
-			fmt.Printf("Invalid project ID: %v\n", err)
+			displayUserInput(logData, projectsMap, inputState)
+			fmt.Println("INPUT MODE")
+			fmt.Println("Invalid project ID")
 			continue
 		}
 
@@ -353,11 +356,14 @@ outerLoop:
 func selectProject(projectsMap map[int]string) (int, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	clearScreen()
+	fmt.Println("Enter report ID ('D' to display list or Ctrl-D to exit)")
 	for {
-		fmt.Println("Enter report ID (or 'D' to display list)")
 		fmt.Print("Selection: ")
 		if !scanner.Scan() {
-			return 0, scanner.Err()
+			if err := scanner.Err(); err != nil {
+				return 0, err
+			}
+			return 0, io.EOF
 		}
 		line := strings.TrimSpace(scanner.Text())
 		lowerline := strings.ToLower(line)
@@ -366,16 +372,25 @@ func selectProject(projectsMap map[int]string) (int, error) {
 		if char == 'd' {
 			clearScreen()
 			displayProjectList(projectsMap)
+			fmt.Println("Please select from the list above (or Ctrl-D to exit).")
 			continue
 		}
 		id, err := strconv.Atoi(line)
 		if err != nil {
-			fmt.Printf("Invalid project ID: %v\n", err)
+			clearScreen()
+			displayProjectList(projectsMap)
+			fmt.Println(
+				"Invalid project ID.\nPlease select from the list above (or Ctrl-D to exit).",
+			)
 			continue
 		}
 		projectDesc, ok := projectsMap[id]
 		if !ok {
-			fmt.Printf("Invalid project ID: %v\n", err)
+			clearScreen()
+			displayProjectList(projectsMap)
+			fmt.Println(
+				"Invalid project ID.\nPlease select from the list above (or Ctrl-D to exit).",
+			)
 			continue
 		}
 		clearScreen()
@@ -383,5 +398,8 @@ func selectProject(projectsMap map[int]string) (int, error) {
 		if confirmedSelection("Display report?") {
 			return id, nil
 		}
+		clearScreen()
+		displayProjectList(projectsMap)
+		fmt.Println("Please select from the list above (or Ctrl-D to exit).")
 	}
 }

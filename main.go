@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"database/sql"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -49,7 +51,10 @@ func main() {
 		case 'd':
 			projectId, err := selectProject(projectsMap)
 			if err != nil {
-				log.Fatal(err)
+				if errors.Is(err, io.EOF) {
+					continue
+				}
+				log.Fatalf("Fatal input error: %v", err)
 			}
 			logRecords, err := readLogData(db, &projectId)
 			if err != nil {
