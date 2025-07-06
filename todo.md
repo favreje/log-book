@@ -73,3 +73,4 @@ directly to either startTime or endTime)
 - [x] 2025-06-27: Add a more helpful error message when user selected an out-of-range project, or
                   nothing at all. Rebuild the project list screen, and add a STATUS MESSAGE
                   section, similar to the main menu solution
+

@@ -34,3 +34,10 @@ type InputState struct {
 	baseDate         time.Time
 	statusMsg        string
 }
+
+type Boundary string
+
+const (
+	Start Boundary = "Start"
+	End   Boundary = "End"
+)

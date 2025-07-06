@@ -60,6 +60,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			clearScreen()
 			reportByProject(logRecords, projectsMap)
 			return
 		case 'e':

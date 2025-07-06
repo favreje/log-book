@@ -22,10 +22,10 @@ func getUserData(logData *LogData, projectsMap map[int]string, inputState *Input
 	if !getLogDate(logData, projectsMap, inputState) {
 		return
 	}
-	if !getLogTime("Start", logData, projectsMap, inputState) {
+	if !getLogTime(Start, logData, projectsMap, inputState) {
 		return
 	}
-	if !getLogTime("End", logData, projectsMap, inputState) {
+	if !getLogTime(End, logData, projectsMap, inputState) {
 		return
 	}
 
@@ -110,13 +110,13 @@ func getLogDate(
 }
 
 func getLogTime(
-	boundaryType string,
+	boundaryType Boundary,
 	logData *LogData,
 	projectsMap map[int]string,
 	inputState *InputState,
 ) bool {
 	// Populates logData.startTime or logData.endTime based on boundaryType
-	if !(boundaryType == "Start" || boundaryType == "End") {
+	if !(boundaryType == Start || boundaryType == End) {
 		log.Fatalf("Invalid boundaryType: %v\n", boundaryType)
 	}
 
@@ -130,7 +130,7 @@ func getLogTime(
 	inputDate := inputState.baseDate
 
 	for {
-		prompt := boundaryType + "Time (HH:MM)"
+		prompt := string(boundaryType) + "Time (HH:MM)"
 		userInput, ok := getUserInput(prompt)
 		if !ok {
 			displayUserInput(logData, projectsMap, inputState)
@@ -147,7 +147,7 @@ func getLogTime(
 			fmt.Printf("Invalid %s Time: %v\n", boundaryType, err)
 			continue
 		}
-		if boundaryType == "Start" {
+		if boundaryType == Start {
 			inputState.startTimeEntered = true
 			logData.startTime = inputTime
 			break
@@ -318,7 +318,7 @@ outerLoop:
 			continue outerLoop
 		case 's':
 			displayUserInput(logData, projectsMap, inputState)
-			getLogTime("Start", logData, projectsMap, inputState)
+			getLogTime(Start, logData, projectsMap, inputState)
 			if inputState.startTimeEntered && inputState.endTimeEntered {
 				recalculatedDuration, err := logData.calculateDuration()
 				if err == nil {
@@ -328,7 +328,7 @@ outerLoop:
 			continue outerLoop
 		case 'e':
 			displayUserInput(logData, projectsMap, inputState)
-			getLogTime("End", logData, projectsMap, inputState)
+			getLogTime(End, logData, projectsMap, inputState)
 			if inputState.startTimeEntered && inputState.endTimeEntered {
 				recalculatedDuration, err := logData.calculateDuration()
 				if err == nil {
