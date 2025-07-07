@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"time"
 )
 
@@ -16,13 +16,13 @@ type LogData struct {
 
 func (l LogData) calculateDuration() (time.Duration, error) {
 	if l.startTime.IsZero() {
-		return 0, fmt.Errorf("Start Time is not set")
+		return 0, ErrStartTimeNotSet
 	}
 	if l.endTime.IsZero() {
-		return 0, fmt.Errorf("End Time is not set")
+		return 0, ErrEndTimeNotSet
 	}
 	if l.endTime.Before(l.startTime) {
-		return 0, fmt.Errorf("End Time is before Start Time")
+		return 0, ErrEndTimeBeforeStartTime
 	}
 	return l.endTime.Sub(l.startTime), nil
 }
@@ -40,4 +40,11 @@ type Boundary string
 const (
 	Start Boundary = "Start"
 	End   Boundary = "End"
+)
+
+// Define sentinel errors
+var (
+	ErrStartTimeNotSet        = errors.New("Start Time is not set")
+	ErrEndTimeNotSet          = errors.New("End Time is not set")
+	ErrEndTimeBeforeStartTime = errors.New("End Time is before Start Time")
 )

@@ -29,13 +29,23 @@ func getUserData(logData *LogData, projectsMap map[int]string, inputState *Input
 		return
 	}
 
-	duration, err := logData.calculateDuration()
-	if err != nil {
-		return
+	for {
+		duration, err := logData.calculateDuration()
+		if err == ErrEndTimeBeforeStartTime {
+			// Check that traversing to the next day was intentional.
+			if confirmedSelection("Does this entry continue to the next day?") {
+				logData.endTime = logData.endTime.AddDate(0, 0, 1)
+				continue
+			}
+		}
+		if err != nil {
+			return
+		}
+		logData.duration = duration
+		displayUserInput(logData, projectsMap, inputState)
+		fmt.Println("INPUT MODE")
+		break
 	}
-	logData.duration = duration
-	displayUserInput(logData, projectsMap, inputState)
-	fmt.Println("INPUT MODE")
 
 	if !getCategory(logData, projectsMap, inputState) {
 		return
@@ -152,6 +162,8 @@ func getLogTime(
 			logData.startTime = inputTime
 			break
 		}
+		// Otherwise, it must be endTime.
+
 		inputState.endTimeEntered = true
 		logData.endTime = inputTime
 		break
@@ -320,9 +332,19 @@ outerLoop:
 			displayUserInput(logData, projectsMap, inputState)
 			getLogTime(Start, logData, projectsMap, inputState)
 			if inputState.startTimeEntered && inputState.endTimeEntered {
-				recalculatedDuration, err := logData.calculateDuration()
-				if err == nil {
-					logData.duration = recalculatedDuration
+				for {
+					duration, err := logData.calculateDuration()
+					if err == ErrEndTimeBeforeStartTime {
+						// Check that traversing to the next day was intentional.
+						if confirmedSelection("Does this entry continue to the next day?") {
+							logData.endTime = logData.endTime.AddDate(0, 0, 1)
+							continue
+						}
+					}
+					logData.duration = duration
+					displayUserInput(logData, projectsMap, inputState)
+					fmt.Println("INPUT MODE")
+					break
 				}
 			}
 			continue outerLoop
@@ -330,9 +352,19 @@ outerLoop:
 			displayUserInput(logData, projectsMap, inputState)
 			getLogTime(End, logData, projectsMap, inputState)
 			if inputState.startTimeEntered && inputState.endTimeEntered {
-				recalculatedDuration, err := logData.calculateDuration()
-				if err == nil {
-					logData.duration = recalculatedDuration
+				for {
+					duration, err := logData.calculateDuration()
+					if err == ErrEndTimeBeforeStartTime {
+						// Check that traversing to the next day was intentional.
+						if confirmedSelection("Does this entry continue to the next day?") {
+							logData.endTime = logData.endTime.AddDate(0, 0, 1)
+							continue
+						}
+					}
+					logData.duration = duration
+					displayUserInput(logData, projectsMap, inputState)
+					fmt.Println("INPUT MODE")
+					break
 				}
 			}
 			continue outerLoop

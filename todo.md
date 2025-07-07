@@ -5,15 +5,19 @@
 - [ ] 2025-06-28: If endTime before startTime, ask user if they intended to extend to the next day,
                   and if so, increment endTime date; if not, return user to endTime entry
     - Let's do this validation check at user input (i.e., real time validation)
+    - Getting complicated: Suppose an extension to the next day, but then date is re-entered?
+        -- simplest solution is that if date is re-entered, then user must also re-enter start & end
+        times. (Zero out all time.Time and duration fields)
 
 - [ ] 2025-06-21: Create validation function before writing to SQL database
 
 **Not Allowed:**
 - No zero values for any fields
-- No endTime before startTime
+- No endTime before startTime (a)
+- No startTime == endTime
 - Dates before 2000
 
-Ask user if intention was to span to the next day, if so, increment endTime date; otherwise, take
+(a) Ask user if intention was to span to the next day, if so, increment endTime date; otherwise, take
 user to edit screen (we're not sure which date or time is incorrect, so let's not assume and go
 directly to either startTime or endTime)
 
