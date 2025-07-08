@@ -47,8 +47,8 @@ func displayUserInput(logData *LogData, projectsMap map[int]string, inputState *
 		fmt.Printf("End time: %25s\n", "MM/DD/YY HH:MM")
 	}
 
-	// Display duration if we have start and end times
-	if inputState.startTimeEntered && inputState.endTimeEntered {
+	// Display duration if we have start and end times and duration is not zero
+	if inputState.startTimeEntered && inputState.endTimeEntered && logData.duration != 0 {
 		fmt.Printf("%-20s %2.2f hrs\n", "Duration:", logData.duration.Hours())
 	} else {
 		fmt.Printf("%-20s %s\n", "Duration:", "--.-- hrs")

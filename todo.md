@@ -2,14 +2,16 @@
 ## OPEN ISSUES LIST
 ---------------------------------------------------------------------------------------------------
 ### validation_before_write
-- [ ] 2025-06-28: If endTime before startTime, ask user if they intended to extend to the next day,
-                  and if so, increment endTime date; if not, return user to endTime entry
-    - Let's do this validation check at user input (i.e., real time validation)
-    - Getting complicated: Suppose an extension to the next day, but then date is re-entered?
-        -- simplest solution is that if date is re-entered, then user must also re-enter start & end
-        times. (Zero out all time.Time and duration fields)
 
-- [ ] 2025-06-21: Create validation function before writing to SQL database
+- [ ] 2026-07-07: userEdit func does not need a passed scanner. Instead gen up one inside the function 
+
+- [ ] 2026-07-08: Move date validation (floor and ceiling values) to user input (i.e., real time)
+
+- [ ] 2026-07-08: Consider changing to 4-digit years to avoid ambiguity
+
+- [ ] 2025-07-08: Create warning function before writing to SQL database
+                  -- Could use a WarningStatus struct to keep track of what the user already
+                     indicated was acceptable
 
 **Not Allowed:**
 - No zero values for any fields
@@ -17,15 +19,14 @@
 - No startTime == endTime
 - Dates before 2000
 
-(a) Ask user if intention was to span to the next day, if so, increment endTime date; otherwise, take
-user to edit screen (we're not sure which date or time is incorrect, so let's not assume and go
-directly to either startTime or endTime)
-
 **Warning:**
 - Duration > 6 hrs
 - Date > one month before current date
 - Category or Description entries <= 3 characters
 
+(a) Ask user if intention was to span to the next day, if so, increment endTime date; otherwise, take
+user to edit screen (we're not sure which date or time is incorrect, so let's not assume and go
+directly to either startTime or endTime)
 
 ### reporting_feature
 - [ ] 2025-06-24: Add export to Excel (or csv if I get lazy)
@@ -78,3 +79,11 @@ directly to either startTime or endTime)
                   nothing at all. Rebuild the project list screen, and add a STATUS MESSAGE
                   section, similar to the main menu solution
 
+- [x] 2025-06-28: If endTime before startTime, ask user if they intended to extend to the next day,
+                  and if so, increment endTime date; if not, return user to endTime entry. Validate
+                  at user input (i.e., real time validation)
+
+- [x] 2026-07-06: If date field is modified, zero-out startTime and endTime fields. User will need
+                  to reenter this data
+
+- [x] 2025-06-21: Create validation function before writing to SQL database

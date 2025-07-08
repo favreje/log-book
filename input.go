@@ -35,8 +35,12 @@ func getUserData(logData *LogData, projectsMap map[int]string, inputState *Input
 			// Check that traversing to the next day was intentional.
 			if confirmedSelection("Does this entry continue to the next day?") {
 				logData.endTime = logData.endTime.AddDate(0, 0, 1)
-				continue
+			} else {
+				if !getLogTime(End, logData, projectsMap, inputState) {
+					return
+				}
 			}
+			continue
 		}
 		if err != nil {
 			return
@@ -110,6 +114,14 @@ func getLogDate(
 			fmt.Println("INPUT MODE")
 			fmt.Printf("Invalid Input Date: %v\n", err)
 			continue
+		}
+		// if modifying an existing date, reset start and end times
+		if inputState.dateEntered {
+			logData.startTime = time.Time{}
+			logData.endTime = time.Time{}
+			logData.duration = 0
+			inputState.startTimeEntered = false
+			inputState.endTimeEntered = false
 		}
 		inputState.dateEntered = true
 		inputState.baseDate = parsedDate
@@ -226,8 +238,16 @@ func userConfirmation(
 	inputState *InputState,
 ) {
 	scanner := bufio.NewScanner(os.Stdin)
+outerLoop:
 	for {
 		displayUserInput(logData, projectsMap, inputState)
+
+		if inputState.statusMsg != "" {
+			fmt.Printf("INVALID ENTRY: %s\n", inputState.statusMsg)
+			inputState.statusMsg = ""
+			fmt.Println(strings.Repeat("-", 80))
+		}
+
 		fmt.Println("(W)rite | (E)dit | (C)ancel")
 		fmt.Print("Selection: ")
 		if !scanner.Scan() {
@@ -243,10 +263,14 @@ func userConfirmation(
 
 		switch char {
 		case 'w':
-			insertId, err := writeLogEntry(db, logData)
-			if err != nil {
-				log.Fatal(err)
+			for !validUserInput(logData, inputState) {
+				continue outerLoop
 			}
+			// insertId, err := writeLogEntry(db, logData)
+			// if err != nil {
+			// 	log.Fatal(err)
+			// }
+			insertId := 42
 			statusMsg := fmt.Sprintf("Successfully saved log entry with ID: %d", insertId)
 			*logData = LogData{}
 			*inputState = InputState{}
@@ -274,11 +298,19 @@ func userEdit(
 outerLoop:
 	for {
 		displayUserInput(logData, projectsMap, inputState)
-		fmt.Println("EDIT MODE")
+
+		if inputState.statusMsg != "" {
+			fmt.Printf("VALIDATION: %s\n", inputState.statusMsg)
+			inputState.statusMsg = ""
+		} else {
+			fmt.Println("EDIT MODE")
+		}
 		fmt.Println(strings.Repeat("-", 80))
-		fmt.Println(
-			"(P)roject ID | (L)og date | (S)tart time | (E)nd time | (C)ategory | (D)escription | (R)eturn",
-		)
+
+		fmt.Println("(P)roject ID")
+		fmt.Println("(L)og date | (S)tart time  | (E)nd time")
+		fmt.Println("(C)ategory | (D)escription | (R)eturn")
+		fmt.Println()
 		fmt.Print("Selection: ")
 		if !scanner.Scan() {
 			if err := scanner.Err(); err != nil {
@@ -434,4 +466,41 @@ func selectProject(projectsMap map[int]string) (int, error) {
 		displayProjectList(projectsMap)
 		fmt.Println("Please select from the list above (or Ctrl-D to exit).")
 	}
+}
+
+func validUserInput(logData *LogData, inputState *InputState) bool {
+	if logData.projectId == 0 {
+		inputState.statusMsg = "Project ID not entered..."
+		return false
+	}
+	if !inputState.startTimeEntered {
+		inputState.statusMsg = "Start time not entered..."
+		return false
+	}
+	if !inputState.endTimeEntered {
+		inputState.statusMsg = "End time not entered..."
+		return false
+	}
+	if logData.duration == 0 {
+		inputState.statusMsg = "Start time cannot be the same as end time..."
+		return false
+	}
+	dateFloor, _ := time.Parse("01/02/2006", "01/01/2001")
+	dateCeiling, _ := time.Parse("01/02/2006", "01/01/2050")
+	if logData.startTime.Before(dateFloor) ||
+		logData.startTime.After(dateCeiling) ||
+		logData.endTime.Before(dateFloor) ||
+		logData.endTime.After(dateCeiling) {
+		inputState.statusMsg = "Date out of range..."
+		return false
+	}
+	if logData.category == "" {
+		inputState.statusMsg = "Category not entered..."
+		return false
+	}
+	if logData.description == "" {
+		inputState.statusMsg = "Description not entered..."
+		return false
+	}
+	return true
 }
