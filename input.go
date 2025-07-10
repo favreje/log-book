@@ -108,11 +108,21 @@ func getLogDate(
 		}
 
 		line := strings.TrimSpace(userInput)
-		parsedDate, err := time.Parse("01/02/06", line)
+		parsedDate, err := time.Parse("1/2/06", line)
 		if err != nil {
 			displayUserInput(logData, projectsMap, inputState)
 			fmt.Println("INPUT MODE")
 			fmt.Printf("Invalid Input Date: %v\n", err)
+			continue
+		}
+
+		// Check date range
+		dateFloor, _ := time.Parse("01/02/2006", "01/01/2001")
+		dateCeiling, _ := time.Parse("01/02/2006", "01/01/2050")
+		if parsedDate.Before(dateFloor) || parsedDate.After(dateCeiling) {
+			statusMsg := "Date out of range..."
+			displayUserInput(logData, projectsMap, inputState)
+			fmt.Printf("%s: %s\n", "INPUT MODE", statusMsg)
 			continue
 		}
 		// if modifying an existing date, reset start and end times
@@ -266,11 +276,14 @@ outerLoop:
 			for !validUserInput(logData, inputState) {
 				continue outerLoop
 			}
-			// insertId, err := writeLogEntry(db, logData)
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			insertId := 42
+			insertId, err := writeLogEntry(db, logData)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// For testing purposes
+			// insertId := 42
+
 			statusMsg := fmt.Sprintf("Successfully saved log entry with ID: %d", insertId)
 			*logData = LogData{}
 			*inputState = InputState{}
@@ -279,6 +292,9 @@ outerLoop:
 		case 'e':
 			userEdit(scanner, logData, projectsMap, inputState)
 		case 'c':
+			if !confirmedSelection("Okay to cancel?") {
+				continue
+			}
 			*logData = LogData{}
 			*inputState = InputState{}
 			return
@@ -482,7 +498,7 @@ func validUserInput(logData *LogData, inputState *InputState) bool {
 		return false
 	}
 	if logData.duration == 0 {
-		inputState.statusMsg = "Start time cannot be the same as end time..."
+		inputState.statusMsg = "Could not calculate duration. Please check start and end times..."
 		return false
 	}
 	dateFloor, _ := time.Parse("01/02/2006", "01/01/2001")

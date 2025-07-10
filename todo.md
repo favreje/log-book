@@ -2,16 +2,16 @@
 ## OPEN ISSUES LIST
 ---------------------------------------------------------------------------------------------------
 ### validation_before_write
-
 - [ ] 2026-07-07: userEdit func does not need a passed scanner. Instead gen up one inside the function 
-
-- [ ] 2026-07-08: Move date validation (floor and ceiling values) to user input (i.e., real time)
 
 - [ ] 2026-07-08: Consider changing to 4-digit years to avoid ambiguity
 
 - [ ] 2025-07-08: Create warning function before writing to SQL database
-                  -- Could use a WarningStatus struct to keep track of what the user already
-                     indicated was acceptable
+                  -- Use a WarningStatus struct to keep track of what the user already
+                     indicated was acceptable for subsequent passes through the warning checks
+
+- [ ] 2025-07-08: Remember to change simulated write function back to actual write to DB after
+                  testing!
 
 **Not Allowed:**
 - No zero values for any fields
@@ -87,3 +87,7 @@ directly to either startTime or endTime)
                   to reenter this data
 
 - [x] 2025-06-21: Create validation function before writing to SQL database
+
+- [x] 2026-07-08: Move date validation (floor and ceiling values) to user input (i.e., real time)
+
+- [x] 2026-07-09: Confirm cancellation of a transaction with the user
